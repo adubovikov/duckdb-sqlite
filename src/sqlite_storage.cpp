@@ -28,6 +28,10 @@ static unique_ptr<Catalog> SQLiteAttach(optional_ptr<StorageExtensionInfo> stora
 			throw NotImplementedException("Unsupported parameter for SQLite Attach: %s", entry.first);
 		}
 	}
+	Value keep_open;
+	if (context.TryGetCurrentSetting("sqlite_keep_database_open", keep_open) && !keep_open.IsNull()) {
+		options.keep_database_open = BooleanValue::Get(keep_open);
+	}
 	return make_uniq<SQLiteCatalog>(db, info.path, std::move(options));
 }
 
