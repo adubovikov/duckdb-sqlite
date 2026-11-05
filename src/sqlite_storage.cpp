@@ -6,6 +6,7 @@
 #include "storage/sqlite_catalog.hpp"
 #include "storage/sqlite_transaction_manager.hpp"
 #include "duckdb/parser/parsed_data/attach_info.hpp"
+#include "duckdb/common/exception/binder_exception.hpp"
 #include "duckdb/transaction/transaction_manager.hpp"
 #include "duckdb/catalog/catalog_entry/schema_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/table_catalog_entry.hpp"
@@ -24,6 +25,14 @@ static unique_ptr<Catalog> SQLiteAttach(optional_ptr<StorageExtensionInfo> stora
 			options.journal_mode = SQLiteOpenOptions::ParseJournalMode(entry.second.ToString());
 		} else if (StringUtil::CIEquals(entry.first, "synchronous")) {
 			options.synchronous = SQLiteOpenOptions::ParseSynchronous(entry.second.ToString());
+		} else if (StringUtil::CIEquals(entry.first, "wal_autocheckpoint")) {
+			auto pages = entry.second.DefaultCastAs(LogicalType::BIGINT).GetValue<int64_t>();
+			if (pages < 0) {
+				throw BinderException("Invalid value \"%s\" for SQLite option wal_autocheckpoint: expected a "
+				                      "number of pages >= 0",
+				                      entry.second.ToString());
+			}
+			options.wal_autocheckpoint = pages;
 		} else {
 			throw NotImplementedException("Unsupported parameter for SQLite Attach: %s", entry.first);
 		}

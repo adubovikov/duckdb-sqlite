@@ -142,6 +142,10 @@ SQLiteDB SQLiteDB::OpenLocal(const string &path, const SQLiteOpenOptions &option
 		// mode), so it has to be applied to every handle we open
 		result.Execute("PRAGMA synchronous=" + options.synchronous);
 	}
+	if (options.wal_autocheckpoint >= 0) {
+		// per-connection too; 0 turns off the checkpoint a commit runs once the WAL passes N pages
+		result.Execute("PRAGMA wal_autocheckpoint=" + std::to_string(options.wal_autocheckpoint));
+	}
 	return result;
 }
 
