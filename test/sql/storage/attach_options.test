@@ -60,3 +60,34 @@ statement error
 ATTACH ':memory:' AS mem (TYPE SQLITE, SYNCHRONOUS 7)
 ----
 Invalid value "7" for SQLite option synchronous
+
+# wal_autocheckpoint: pages >= 0 (0 = no automatic checkpoint), applied to every handle
+statement ok
+ATTACH '__TEST_DIR__/wal_autockpt.db' AS ac (TYPE SQLITE, JOURNAL_MODE 'WAL', WAL_AUTOCHECKPOINT 0)
+
+statement ok
+CREATE TABLE ac.t AS SELECT range AS i, repeat('x', 1000) AS v FROM range(20000)
+
+query I
+SELECT count(*) FROM ac.t
+----
+20000
+
+statement ok
+DETACH ac
+
+statement ok
+ATTACH '__TEST_DIR__/wal_autockpt.db' AS ac (TYPE SQLITE, WAL_AUTOCHECKPOINT 4000)
+
+statement ok
+DETACH ac
+
+statement error
+ATTACH ':memory:' AS mem (TYPE SQLITE, WAL_AUTOCHECKPOINT -1)
+----
+Invalid value "-1" for SQLite option wal_autocheckpoint
+
+statement error
+ATTACH ':memory:' AS mem (TYPE SQLITE, WAL_AUTOCHECKPOINT 'often')
+----
+Could not convert

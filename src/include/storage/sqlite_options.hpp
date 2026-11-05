@@ -24,6 +24,9 @@ struct SQLiteOpenOptions {
 	string synchronous;
 	// keep one handle open for the lifetime of an attached on-disk database (sqlite_keep_database_open)
 	bool keep_database_open = false;
+	// PRAGMA wal_autocheckpoint (pages) on every handle; -1 = leave SQLite's default (1000). 0 disables
+	// automatic checkpoints, for callers that checkpoint the WAL themselves (sqlite3_wal_checkpoint_v2).
+	int64_t wal_autocheckpoint = -1;
 
 	//! Validate and normalise a journal_mode value; throws on anything SQLite would not accept
 	static string ParseJournalMode(const string &value);
